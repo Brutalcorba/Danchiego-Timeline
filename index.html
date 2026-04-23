@@ -240,10 +240,18 @@ function parseCSV(text) {
 
 // ─── FETCH ────────────────────────────────────────────────────────────────────
 async function fetchCSV(url) {
-  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-  const res = await fetch(proxyUrl);
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.text();
+  const proxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+  ];
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(url));
+      if (res.ok) return res.text();
+    } catch(e) { continue; }
+  }
+  throw new Error('Semua proxy gagal');
 }
 
 async function loadAllData() {
